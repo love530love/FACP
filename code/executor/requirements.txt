@@ -1,0 +1,5 @@
+nats-py>=2.6.0
+python-uiautomation>=1.0.0
+pillow>=10.0.0
+python-dotenv>=1.0.0
+psutil>=5.9.0

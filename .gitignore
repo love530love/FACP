@@ -1,0 +1,25 @@
+# 运行配置与密钥，绝不入库
+.env
+sidecar.yaml
+local_token*
+
+# 运行产物
+log/
+*.db
+*.db-journal
+*.sqlite
+backup/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.venv/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store

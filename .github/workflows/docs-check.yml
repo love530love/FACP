@@ -1,0 +1,39 @@
+name: docs-check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 校验文档元信息
+        run: python scripts/gen_index.py --check
+
+      - name: 校验索引与 README 同步
+        run: |
+          python scripts/gen_index.py --write
+          if ! git diff --exit-code -- README.md; then
+            echo "::error::README 索引与 docs/ 不一致，请本地运行 python scripts/gen_index.py --write 后提交"
+            exit 1
+          fi
+
+      - name: Python 语法检查
+        run: python -m py_compile code/executor/*.py scripts/gen_index.py
+
+      - name: 安全检查（.env 不得入库）
+        run: |
+          if git ls-files | grep -E '^.?\.env$|^.*/\.env$'; then
+            echo "::error::检测到 .env 被纳入版本控制"
+            exit 1
+          fi
+          echo "OK: 未发现 .env 入库"
