@@ -8,6 +8,12 @@
 
 ## [Unreleased]
 
+（暂无）
+
+---
+
+## [0.5.0] - 2026-11-07
+
 ### Added
 - `code/sidecar/example_desktop_call.py`：可运行的 `desktop_execute` 调用示例，含 `--dry-run` 字段自检；`steps_l0/l1/l2.json` 三份模板。
 - `docs/03-sidecar.md §3.3`：向 Executor 发起调用（含 L2 高危）的载荷字段说明与两个常见坑。
