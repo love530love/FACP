@@ -1,7 +1,8 @@
 # FACP — 联邦 Agent 协作平面
 
-[![docs-check](https://github.com/love530love/facp/actions/workflows/docs-check.yml/badge.svg)](https://github.com/love530love/facp/actions/workflows/docs-check.yml)
-[![release](https://img.shields.io/github/v/tag/love530love/facp?label=release)](https://github.com/love530love/facp/releases)
+[![docs-check](https://github.com/love530love/FACP/actions/workflows/docs-check.yml/badge.svg)](https://github.com/love530love/FACP/actions/workflows/docs-check.yml)
+[![release](https://img.shields.io/github/v/tag/love530love/FACP?label=release)](https://github.com/love530love/FACP/releases)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 > **F**ederation **A**gent **C**ollaboration **P**lane
 > 让 Claude Desktop、Qoder（CN/INTL）、WorkBuddy（CN/INTL）、豆包（CN/INTL）、Codex Desktop 等**互相独立、闭源的桌面 AI 客户端**，以对等节点方式自发协作；并为其配一套可被任意节点调用的桌面执行手脚（FACP-Executor），替代工程师手工操作电脑。

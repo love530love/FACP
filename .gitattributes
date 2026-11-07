@@ -1,0 +1,28 @@
+# 统一行尾，避免 Windows 与 Unix 之间的换行噪音
+# 仓库内的文档、代码、配置一律以 LF 存储与检出
+* text=auto eol=lf
+
+*.md      text eol=lf
+*.py      text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.json    text eol=lf
+*.sh      text eol=lf
+*.toml    text eol=lf
+*.txt     text eol=lf
+.gitignore       text eol=lf
+.gitattributes   text eol=lf
+
+# Windows 自身需要 CRLF 的文件
+*.ps1     text eol=crlf
+*.bat     text eol=crlf
+*.cmd     text eol=crlf
+
+# 二进制
+*.png     binary
+*.jpg     binary
+*.gif     binary
+*.pdf     binary
+*.zip     binary
+*.tar     binary
+*.gz      binary

@@ -28,6 +28,6 @@ jobs:
         with:
           generate_release_notes: true
           body: |
-            FACP 版本发布。协议与文档变更详见 [CHANGELOG.md](CHANGELOG.md)。
+            FACP 版本发布。协议与文档变更详见 [CHANGELOG.md](https://github.com/love530love/FACP/blob/main/CHANGELOG.md)。
 
-            本版本涉及的文档状态见 [README 索引](README.md)。
+            本版本涉及的文档状态见 [README 文档地图](https://github.com/love530love/FACP#文档地图)。
