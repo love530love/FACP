@@ -102,7 +102,10 @@ def write_back(table: str) -> bool:
         text,
         flags=re.DOTALL,
     )
-    README.write_text(new, encoding="utf-8")
+    # 显式指定 newline="\n"：Windows 上默认会写成 CRLF，
+    # 与 .gitattributes 的 eol=lf 冲突，每次 --write 都会制造伪 diff。
+    with README.open("w", encoding="utf-8", newline="\n") as fh:
+        fh.write(new)
     return True
 
 
