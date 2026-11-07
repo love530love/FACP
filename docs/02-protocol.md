@@ -1,7 +1,7 @@
 ---
 id: FACP-002
 title: 消息协议规范
-version: 0.4.0
+version: 0.4.1
 status: stable
 owner: 李富强
 updated: 2026-11-07
@@ -10,7 +10,7 @@ related: [FACP-001, FACP-003, FACP-004]
 
 # 消息协议规范
 
-> 本规范定义节点之间**唯一允许**的通信形式。它同时约束 Sidecar、Executor、FSHub 三方实现，任何字段变更按 [MAINTENANCE §3](MAINTENANCE.md) 走版本评审。
+> 本规范定义节点之间**唯一允许**的通信形式。它同时约束 Sidecar、Executor、FSHub 三方实现，任何字段变更按 [MAINTENANCE §3](../MAINTENANCE.md#3-版本号规则) 走版本评审。
 
 ## 1. 设计约束（先立规矩）
 

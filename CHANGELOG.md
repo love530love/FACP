@@ -14,9 +14,14 @@
 - `code/sidecar/tests`：20 条用例覆盖信封必填字段、`cross_domain` 推导、高危授权字段、本地自检拦截。
 - `file_write` 动作实现（overwrite / create / append，写入统一 LF，回读校验字节数）。
 - `shell_run` 动作实现（捕获 stdout/stderr、退出码、超时）。
+- `scripts/check_links.py`：站内 Markdown 链接与标题锚点校验，已接入 CI。
 
 ### Changed
 - CI 的语法检查与测试范围扩展到 `code/sidecar`。
+
+### Fixed
+- `docs/02-protocol.md` 中指向 `MAINTENANCE.md` 的相对路径缺少 `../`，链接实际是坏的；已修正并补上 `#3-版本号规则` 锚点（FACP-002 v0.4.1）。
+- `scripts/check_links.py` 的围栏解析改为逐行状态机：文档正文里出现过「四个连续反引号」的行内写法，全局正则会把它当成围栏开始，导致后续代码块配对错位、一半标题识别不到。
 
 ---
 

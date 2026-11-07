@@ -27,6 +27,9 @@ jobs:
             exit 1
           fi
 
+      - name: 文档链接校验（含锚点）
+        run: python scripts/check_links.py
+
       - name: Python 语法检查
         run: python -m py_compile code/executor/*.py code/sidecar/*.py scripts/gen_index.py
 
