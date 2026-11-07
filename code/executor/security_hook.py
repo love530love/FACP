@@ -34,8 +34,17 @@ class StepBlocked(Exception):
 
 
 class SecurityHook:
-    def __init__(self, allow_high_risk: bool = False):
+    def __init__(self, allow_high_risk: bool = False, session_authorized: bool = False):
         self.allow_high_risk = allow_high_risk
+        self.session_authorized = session_authorized
+
+    def for_session(self, session_authorized: bool) -> "SecurityHook":
+        """按单次协作会话派生子 hook：全局开关沿用，会话授权逐次带入。
+
+        FACP-004 §5.2 要求 L2 同时满足全局与会话两级；会话级授权来源是
+        Observer 上对 FSID 的授信，Executor 侧只认调用方带来的布尔结论。
+        """
+        return SecurityHook(self.allow_high_risk, session_authorized)
 
     def _path_blocked(self, path: str) -> str | None:
         norm = path.replace("/", "\\").lower()
@@ -55,14 +64,24 @@ class SecurityHook:
     def check_step(self, idx: int, step: dict) -> None:
         action = step.get("action")
 
+        # L0 file_read：不拦执行，但仍受路径黑名单与上跳约束（FACP-004 §3.2）
+        if action == "file_read":
+            reason = self._path_blocked(step.get("path", ""))
+            if reason:
+                raise StepBlocked(idx, reason)
+            return
+
         # L0/L1：放行
         if action not in HIGH_RISK_ACTIONS:
             return
 
-        # L2：需要全局高危开关
+        # L2：双开关（FACP-004 §5.2）——全局与会话级同时满足才放行
         if not self.allow_high_risk:
             raise StepBlocked(idx, "高危动作被禁止（ALLOW_HIGH_RISK=false），"
                                    "需全局开关 + 会话级授权")
+        if not self.session_authorized:
+            raise StepBlocked(idx, "会话未授予高危执行权限"
+                                   "（session_high_risk_granted=false）")
 
         if action == "file_write":
             reason = self._path_blocked(step.get("path", ""))

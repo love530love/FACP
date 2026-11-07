@@ -1,0 +1,2 @@
+# 开发与测试依赖（CI 与本地共用；运行时依赖见 requirements.txt）
+pytest>=8

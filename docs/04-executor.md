@@ -1,7 +1,7 @@
 ---
 id: FACP-004
 title: Executor 执行引擎（手脚）规范
-version: 0.2.0
+version: 0.2.1
 status: draft
 owner: 李富强
 updated: 2026-11-07
@@ -146,6 +146,11 @@ run_steps(steps):
 2. 会话级：CALL 的 `payload.risk_level == "high"` 且 FSID 在 Observer 上被授予「高危执行权限」
 
 两者同时满足才执行；否则返回 `forbidden`。
+
+> **实现约定**：Executor 不自行判定 FSID 权限（它没有 Observer 的授信视图）。第二条由
+> Sidecar 依据 Observer 的授信结论收敛成一个布尔字段 `payload.session_high_risk_granted`，
+> 随 CALL 一起送达；`ALLOW_HIGH_RISK=false` 或该字段缺失/为 `false` 时，一切 L2 动作返回
+> `forbidden`，且不执行任何步骤（预检阶段即整体拒绝）。
 
 ### 5.3 路径与命令黑名单（默认）
 

@@ -67,6 +67,23 @@ class ActionEngine:
                 result["ok"] = True
                 result["verified"] = True
 
+            elif action == "file_read":
+                # L0 只读（FACP-004 §3.2）：不截屏、不改窗口状态
+                path = step["path"]
+                limit = int(step.get("max_bytes", 65536))
+                try:
+                    with open(path, "r", encoding=step.get("encoding", "utf-8"),
+                              errors="replace") as fh:
+                        content = fh.read(limit)
+                    result["content"] = content
+                    result["truncated"] = len(content) >= limit
+                    result["ok"] = True
+                    result["verified"] = True
+                except FileNotFoundError:
+                    result["msg"] = f"文件不存在: {path}"
+                except PermissionError as exc:
+                    result["msg"] = f"无权限读取: {exc}"
+
             elif action == "find_window":
                 win = self.find_window(
                     step["window_title"],

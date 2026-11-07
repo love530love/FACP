@@ -121,9 +121,13 @@ async def handle_message(msg) -> None:
     async with _exec_lock:
         steps = env["payload"]["steps"]
 
+        # 双开关的第二级：会话是否被授予高危执行权限（FACP-004 §5.2）
+        session_granted = bool(env["payload"].get("session_high_risk_granted", False))
+        hook = security.for_session(session_granted)
+
         # 逐条高危预检：任何一步被拦，整个任务不开始
         try:
-            security.precheck_all(steps)
+            hook.precheck_all(steps)
         except StepBlocked as blocked:
             if reply_subject:
                 await send_reply(reply_subject, build_reply(

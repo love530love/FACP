@@ -12,9 +12,18 @@
 - 建立 FACP 文档项目：分层文档（00–08）、索引脚本、维护规范、术语表、路线图。
 - `code/executor` 最小可运行 Demo：NATS 订阅、UIA 动作引擎、高危动作拦截。
 - 文档元信息（front matter）与自动索引机制。
+- `code/executor/tests`：44 条回归用例，覆盖 L0/L1/L2 分级、双开关语义、路径黑名单、上跳目录、命令黑名单、覆盖保护、整体预检，以及 `file_read` 与 `run_steps` 失败中断。
+- `file_read` 动作实现（L0）：文档 §3.1 早已定义、原型此前缺失；现支持 `max_bytes` 截断、`encoding` 可指定，路径黑名单照常生效。
+- `SecurityHook.for_session()`：按单次会话派生 hook，落实 §5.2 的会话级授权。
 
 ### Changed
 - 将原先单篇架构说明拆分为「总览 / 身份域 / 协议 / Sidecar / Executor / Observer / 提示词 / 风险 / 部署」九个专题，按阅读顺序编号。
+- Executor 放行 L2 动作由「单一全局开关」改为「全局 + 会话级双开关」（对齐 FACP-004 §5.2）：载荷须带 `session_high_risk_granted=true`，否则一律 `forbidden`。此前只有全局开关，与规范不一致。
+- CI `docs-check` 增加 pytest 回归测试步骤。
+
+### Fixed
+- `.gitattributes` 统一行尾为 LF，消除 Windows 下 CRLF 换行噪音；`*.ps1/*.bat` 保留 CRLF。
+- Release 工作流说明中的相对链接改为绝对链接（GitHub Release 页面不解析仓库相对路径）。
 
 ### Security
 - 明确 Executor 默认 `ALLOW_HIGH_RISK=false`，文件写入 / shell 执行需显式放行。
