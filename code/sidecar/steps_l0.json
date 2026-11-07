@@ -1,0 +1,5 @@
+{
+  "steps": [
+    { "action": "file_read", "path": "C:\\Users\\Public\\facp-demo.txt", "max_bytes": 4096 }
+  ]
+}

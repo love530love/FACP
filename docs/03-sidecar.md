@@ -1,7 +1,7 @@
 ---
 id: FACP-003
 title: Sidecar SDK 开发规范与接口
-version: 0.2.0
+version: 0.3.0
 status: draft
 owner: 李富强
 updated: 2026-11-07
@@ -69,6 +69,34 @@ Sidecar.exe（单实例，绑定唯一 App + 唯一账号）
 ```
 
 接收侧（Agent 本体的提示词）需被告知：以该标记开头的输入来自联邦协作，不是用户输入。
+
+### 3.3 向 Executor 发起调用（含 L2 高危）
+
+Executor 是**独立节点**，Sidecar 只负责投递 `desktop_execute`，不直接操作桌面。载荷字段见 [FACP-002 §4.2](02-protocol.md#42-intent-枚举初始集合)：
+
+| 字段 | 必填 | 说明 |
+|---|---|---|
+| `instruction` | ✅ | 一句话意图，给人看的，不参与执行逻辑 |
+| `risk_level` | ✅ | `normal` / `high`；steps 含 `file_write` 或 `shell_run` 时**必须**为 `high` |
+| `require_confirm` | ✅ | 是否要求人工确认后才执行 |
+| `session_high_risk_granted` | 条件 | `risk_level=high` 时必填。由 Sidecar 依据 Observer 对该 FSID 的授信结论填写，Executor 不自行判定权限（详见 [FACP-004 §5.2](04-executor.md#52-l2-放行的双开关)） |
+| `steps` | ✅ | 动作序列，每步一个动作，结构见 FACP-004 §3.1 |
+
+两条容易踩的坑：
+
+1. **高危时不要省略 `session_high_risk_granted`。** 字段缺失与明确的 `false` 在协议上等价于拒绝，但显式写入能让审计日志区分"调用方忘了"与"明确未授权"。
+2. **不要把 `risk_level` 写成 `high` 却只放了 L0/L1 动作。** 这会让 Executor 走双开关路径，在没有全局 `ALLOW_HIGH_RISK` 时白跑一趟被拒。
+
+可运行示例见 [`code/sidecar/example_desktop_call.py`](../code/sidecar/example_desktop_call.py)：先用 `--dry-run` 打印信封核对字段，再去掉该参数实际投递；steps 模板见同目录 `steps_l0.json` / `steps_l1.json` / `steps_l2.json`。
+
+```bash
+# 只校验字段，不联网
+python code/sidecar/example_desktop_call.py --target facp-executor-01 --dry-run
+
+# 发起 L2 调用（Executor 侧需 ALLOW_HIGH_RISK=true）
+python code/sidecar/example_desktop_call.py --target facp-executor-01 \
+    --steps code/sidecar/steps_l2.json --high-risk --granted
+```
 
 ## 4. 会话映射（FSID ↔ App 本地会话）
 

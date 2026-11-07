@@ -33,7 +33,7 @@
 | [FACP-000](docs/00-overview.md) | 架构总览与设计原则 | `stable` | 0.3.0 | 2026-11-07 | FACP-001, FACP-002, FACP-003, FACP-004, FACP-005 |
 | [FACP-001](docs/01-identity-domain.md) | 身份模型与安全域规范 | `stable` | 0.2.0 | 2026-11-07 | FACP-000, FACP-002, FACP-003 |
 | [FACP-002](docs/02-protocol.md) | 消息协议规范 | `stable` | 0.4.0 | 2026-11-07 | FACP-001, FACP-003, FACP-004 |
-| [FACP-003](docs/03-sidecar.md) | Sidecar SDK 开发规范与接口 | `draft` | 0.2.0 | 2026-11-07 | FACP-001, FACP-002, FACP-004 |
+| [FACP-003](docs/03-sidecar.md) | Sidecar SDK 开发规范与接口 | `draft` | 0.3.0 | 2026-11-07 | FACP-001, FACP-002, FACP-004 |
 | [FACP-004](docs/04-executor.md) | Executor 执行引擎（手脚）规范 | `draft` | 0.2.1 | 2026-11-07 | FACP-002, FACP-007 |
 | [FACP-005](docs/05-observer.md) | Observer 观测面板 PRD | `draft` | 0.1.0 | 2026-11-07 | FACP-000, FACP-001, FACP-004 |
 | [FACP-006](docs/06-prompts.md) | 联邦模式系统提示词集 | `review` | 0.2.0 | 2026-11-07 | FACP-001, FACP-002, FACP-004 |

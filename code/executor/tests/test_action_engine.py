@@ -82,3 +82,86 @@ def test_run_steps_aborts_at_first_failure(tmp_path):
     assert len(out["step_results"]) == 1
     assert out["error"]["code"] == "5002"
     assert out["error"]["retryable"] is True
+
+
+# ---------- file_write（L2） ----------
+
+def test_file_write_create(tmp_path):
+    target = tmp_path / "out.txt"
+    result = make_engine(tmp_path).run_step({
+        "action": "file_write", "path": str(target), "mode": "create", "content": "hello"
+    })
+    assert result["ok"] is True
+    assert target.read_text(encoding="utf-8") == "hello"
+    assert result["bytes"] >= 4
+
+
+def test_file_write_append_keeps_previous_content(tmp_path):
+    target = tmp_path / "out.txt"
+    target.write_text("first\n", encoding="utf-8")
+    result = make_engine(tmp_path).run_step({
+        "action": "file_write", "path": str(target), "mode": "append", "content": "second\n"
+    })
+    assert result["ok"] is True
+    assert target.read_text(encoding="utf-8") == "first\nsecond\n"
+
+
+def test_file_write_overwrite_replaces(tmp_path):
+    target = tmp_path / "out.txt"
+    target.write_text("old content", encoding="utf-8")
+    result = make_engine(tmp_path).run_step({
+        "action": "file_write", "path": str(target), "content": "new"
+    })
+    assert result["ok"] is True
+    assert target.read_text(encoding="utf-8") == "new"
+
+
+def test_file_write_creates_parent_dirs(tmp_path):
+    target = tmp_path / "nested" / "deep" / "out.txt"
+    result = make_engine(tmp_path).run_step({
+        "action": "file_write", "path": str(target), "mode": "create", "content": "x"
+    })
+    assert result["ok"] is True
+    assert target.exists()
+
+
+def test_file_write_writes_lf_line_endings(tmp_path):
+    """写入端统一 LF，避免跨平台 diff 噪音。"""
+    target = tmp_path / "out.txt"
+    make_engine(tmp_path).run_step({
+        "action": "file_write", "path": str(target), "content": "a\nb\n"
+    })
+    raw = target.read_bytes()
+    assert b"\r\n" not in raw
+    assert b"a\nb\n" in raw
+
+
+# ---------- shell_run（L2） ----------
+
+def test_shell_run_captures_stdout(tmp_path):
+    result = make_engine(tmp_path).run_step({
+        "action": "shell_run", "command": 'python -c "print(\'facp-ok\')"'
+    })
+    assert result["ok"] is True
+    assert result["verified"] is True
+    assert "facp-ok" in result["stdout"]
+    assert result["exit_code"] == 0
+
+
+def test_shell_run_nonzero_exit_marks_failed(tmp_path):
+    result = make_engine(tmp_path).run_step({
+        "action": "shell_run", "command": 'python -c "import sys; sys.exit(3)"'
+    })
+    assert result["ok"] is False
+    assert result["exit_code"] == 3
+    assert "非零退出码" in result["msg"]
+
+
+def test_shell_run_times_out(tmp_path):
+    result = make_engine(tmp_path).run_step({
+        "action": "shell_run",
+        "command": 'python -c "import time; time.sleep(5)"',
+        "timeout_sec": 1,
+    })
+    assert result["ok"] is False
+    assert "超时" in result["msg"]

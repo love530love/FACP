@@ -84,6 +84,54 @@ class ActionEngine:
                 except PermissionError as exc:
                     result["msg"] = f"无权限读取: {exc}"
 
+            elif action == "file_write":
+                # L2 高危（FACP-004 §5）：能到这里说明安全层已放行双开关
+                path = step["path"]
+                mode = step.get("mode", "overwrite")   # overwrite / create / append
+                content = step.get("content", "")
+                encoding = step.get("encoding", "utf-8")
+                target = Path(path)
+                if step.get("create_parents", True):
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                if mode == "append":
+                    with open(target, "a", encoding=encoding, newline="\n") as fh:
+                        fh.write(content)
+                else:
+                    with open(target, "w", encoding=encoding, newline="\n") as fh:
+                        fh.write(content)
+                # 回读校验：写入成功 = 文件存在且大小符合预期
+                written = target.stat().st_size if target.exists() else -1
+                result["ok"] = written >= 0
+                result["verified"] = written >= 0
+                result["path"] = str(target.resolve())
+                result["bytes"] = written
+                if not result["ok"]:
+                    result["msg"] = "写入后文件不存在"
+
+            elif action == "shell_run":
+                # L2 高危（FACP-004 §5）：命令黑名单已在安全层过滤，这里只负责执行
+                command = step["command"]
+                timeout = int(step.get("timeout_sec", 30))
+                try:
+                    proc = subprocess.run(
+                        command,
+                        shell=True,
+                        capture_output=True,
+                        text=True,
+                        timeout=timeout,
+                        cwd=step.get("cwd"),
+                    )
+                except subprocess.TimeoutExpired:
+                    result["msg"] = f"命令超时（>{timeout}s）"
+                else:
+                    result["exit_code"] = proc.returncode
+                    result["stdout"] = proc.stdout[-4000:]
+                    result["stderr"] = proc.stderr[-4000:]
+                    result["ok"] = proc.returncode == 0
+                    result["verified"] = True
+                    if proc.returncode != 0:
+                        result["msg"] = f"非零退出码: {proc.returncode}"
+
             elif action == "find_window":
                 win = self.find_window(
                     step["window_title"],

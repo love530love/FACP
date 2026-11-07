@@ -1,0 +1,7 @@
+{
+  "steps": [
+    { "action": "find_window", "window_title": "Claude", "match_mode": "contains", "timeout_sec": 5 },
+    { "action": "activate_window", "window_title": "Claude" },
+    { "action": "type_text", "window_title": "Claude", "text": "整理今天的待办", "send_enter": true }
+  ]
+}
