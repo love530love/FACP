@@ -1,7 +1,7 @@
 ---
 id: FACP-004
 title: Executor 执行引擎（手脚）规范
-version: 0.2.1
+version: 0.3.0
 status: draft
 owner: 李富强
 updated: 2026-11-07
@@ -129,6 +129,49 @@ run_steps(steps):
 - **单实例互斥**：一台机器同一时刻只允许一个 Executor 任务在执行；其他 CALL 返回 `rejected(reason=busy)`。
 - **超时**：单步默认 10s，整任务受 CALL 的 `ttl_seconds` 约束。
 - **截图策略**：失败必截图；成功时按 `screenshot_policy`（`always` / `on_fail` / `never`）执行，默认 `on_fail`。
+
+### 4.3 执行中急停（在途任务）
+
+FACP-002 §5.1 的 `suspended` 只覆盖「拒绝新的 CALL」。但一个任务跑起来可能持续十几秒到几分钟，中途用户改主意了、或者发现它正在往错误的地方点，**已经开始的步骤序列也必须能停下来**。这一节定义那个通道。
+
+**信号源**：`FSID.user_suspend`（FACP-002 §3.1 的会话元数据），不新增消息类型。
+
+**传导方式**：本地状态文件，而不是 NATS 控制消息。
+
+FACP-002 §1 把消息类型钉死为 `COLLAB_CALL` / `COLLAB_REPLY` 两类，加第三类等于动协议地基；而 Executor 与 Sidecar 本就同机（单节点模型的前提），一个 JSON 文件足够：
+
+```json
+{
+  "fs-demo-001": { "suspended": true, "updated_at": "2026-11-07T19:51:53+08:00", "reason": "发现它在乱点" }
+}
+```
+
+- 路径：`%LOCALAPPDATA%\FACP\suspend.json`（Linux 为 `$XDG_STATE_HOME/facp/suspend.json`），可用 `FACP_SUSPEND_FILE` 覆盖。
+- 写入方：Sidecar 收到 `POST /suspend`（FACP-003 §5）时写入；也可以由 [scripts/facp_suspend.py](../scripts/facp_suspend.py) 直接写。
+- 读取方：Executor。原子替换写入（先写 `.tmp` 再 `os.replace`），读取按 mtime 缓存，每个检查点不会真去打一次磁盘。
+
+**检查点**：两处。
+
+| 时机 | 结果 |
+|---|---|
+| 收到 CALL 的预检阶段（FACP-002 §6 第 4 步） | 直接回 `status=suspended`，一步都不执行 |
+| **每一步执行前** | 停止后续步骤，返回 `status=suspended` + `error.code=4012`，`failed_step_idx` 指向被拦下的那一步 |
+
+检查点放在「执行前」而不是「执行后」，是因为急停的语义是**不再发起新动作**：已经做完的步骤照常计入 `step_results`，调用方据此知道停在哪、已经造成了什么影响。
+
+**不保证的事**：单步一旦开始就不会被打断（比如一个 10 秒的超时等待）。急停只在步与步之间生效。要打断正在进行的单步，只能靠该动作自己的 `timeout_sec`——这是刻意取舍：半途打断一个已发出的 UIA 点击，比让它跑完更容易留下不一致的界面状态。
+
+**回执示例**：
+
+```json
+{
+  "status": "suspended",
+  "payload": { "failed_step_idx": 2, "step_results": [ ...前两步... ] },
+  "error": { "code": "4012", "reason": "session_suspended",
+             "message": "第 2 步执行前收到会话急停，已停止后续动作",
+             "failed_step_idx": 2, "retryable": false }
+}
+```
 
 ## 5. 安全层（本规范的核心）
 

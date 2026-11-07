@@ -24,6 +24,7 @@ from nats.aio.client import Client as NATS
 
 from action_engine import ActionEngine
 from security_hook import SecurityHook, StepBlocked
+from suspend_registry import SuspendRegistry
 
 load_dotenv()
 
@@ -36,6 +37,7 @@ STEP_TIMEOUT_SEC = int(os.getenv("STEP_TIMEOUT_SEC", "10"))
 
 engine = ActionEngine(snapshot_root=SNAPSHOT_ROOT, step_timeout_sec=STEP_TIMEOUT_SEC)
 security = SecurityHook(allow_high_risk=ALLOW_HIGH_RISK)
+suspends = SuspendRegistry()
 
 nc = NATS()
 
@@ -107,6 +109,19 @@ async def handle_message(msg) -> None:
             ))
         return
 
+    # FACP-002 §6 第 4 步：会话级急停校验。被急停的 FSID 一律不再接受新任务。
+    fsid = env["fsid"]
+    if suspends.is_suspended(fsid):
+        if reply_subject:
+            await send_reply(reply_subject, build_reply(
+                env, "suspended",
+                {"reason": "session_suspended"},
+                {"code": "4012", "reason": "session_suspended",
+                 "message": f"FSID {fsid} 已被用户急停，等待恢复", "retryable": False},
+                int((time.time() - started) * 1000),
+            ))
+        return
+
     if _exec_lock.locked():
         # 已有任务在执行（FACP-004 §4.2 单实例互斥）
         if reply_subject:
@@ -139,10 +154,19 @@ async def handle_message(msg) -> None:
                 ))
             return
 
-        # 执行
-        result = engine.run_steps(steps, trace_id=env["trace_id"])
+        # 执行；每步前再查一次急停，保证执行中也能停下（FACP-004 §5.4）
+        result = engine.run_steps(
+            steps,
+            trace_id=env["trace_id"],
+            suspend_check=lambda: suspends.is_suspended(fsid),
+        )
 
-    status = "success" if result["error"] is None else "failed"
+    if result["error"] is None:
+        status = "success"
+    elif result["error"].get("reason") == "session_suspended":
+        status = "suspended"
+    else:
+        status = "failed"
     payload = {
         "failed_step_idx": result.get("failed_step_idx"),
         "step_results": result["step_results"],

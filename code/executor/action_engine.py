@@ -229,9 +229,28 @@ class ActionEngine:
 
     # ---------- 序列执行 ----------
 
-    def run_steps(self, steps: list[dict[str, Any]], trace_id: str = "tr-unknown") -> dict[str, Any]:
+    def run_steps(self, steps: list[dict[str, Any]], trace_id: str = "tr-unknown",
+                  suspend_check=None) -> dict[str, Any]:
+        """逐条执行。suspend_check 是可调用对象，返回 True 表示会话已被急停（FACP-004 §5.4）。
+
+        检查点放在每一步**执行前**而不是执行后：急停的语义是「不再做任何新动作」，
+        已经做完的步骤照常计入 step_results，方便调用方知道停在哪一步。
+        """
         step_results = []
         for idx, step in enumerate(steps):
+            if suspend_check is not None and suspend_check():
+                return {
+                    "step_results": step_results,
+                    "failed_step_idx": idx,
+                    "snapshot": self.snapshot(trace_id, f"suspended_before_step{idx}"),
+                    "error": {
+                        "code": "4012",
+                        "reason": "session_suspended",
+                        "message": f"第 {idx} 步执行前收到会话急停，已停止后续动作",
+                        "failed_step_idx": idx,
+                        "retryable": False,
+                    },
+                }
             r = self.run_step(step)
             r["step_idx"] = idx
             step_results.append(r)

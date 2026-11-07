@@ -1,7 +1,7 @@
 ---
 id: FACP-003
 title: Sidecar SDK 开发规范与接口
-version: 0.3.0
+version: 0.4.0
 status: draft
 owner: 李富强
 updated: 2026-11-07
@@ -185,6 +185,7 @@ switch_session(fsid):
 | 4009 | `intent_unsupported` | 未知 intent |
 | 4010 | `payload_too_large` | 信封超 256 KB |
 | 4011 | `audit_token_invalid` | 跨域令牌过期/重放 |
+| 4012 | `session_suspended` | 会话被用户急停（预检时即拒绝，或执行中被停，见 FACP-004 §4.3） |
 | 5001 | `app_api_error` | Tier1 接口调用失败 |
 | 5002 | `inject_failed` | 注入后未检测到 Agent 响应 |
 

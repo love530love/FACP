@@ -15,8 +15,13 @@
 - `file_write` 动作实现（overwrite / create / append，写入统一 LF，回读校验字节数）。
 - `shell_run` 动作实现（捕获 stdout/stderr、退出码、超时）。
 - `scripts/check_links.py`：站内 Markdown 链接与标题锚点校验，已接入 CI。
+- `code/executor/suspend_registry.py`：会话急停状态（本地 JSON，原子写入、mtime 缓存）。
+- `scripts/facp_suspend.py`：命令行急停开关（`--suspend` / `--resume` / `--status`）。
+- `docs/04-executor.md §4.3`：执行中急停（在途任务）—— 检查点、传导方式与不保证的事。
+- 错误码 `4012 session_suspended`（FACP-003 v0.4.0）。
 
 ### Changed
+- Executor 收到 CALL 的预检增加第 4 步暂停校验；执行循环在每一步之前复查急停，命中则中止后续步骤并回 `status=suspended`。
 - CI 的语法检查与测试范围扩展到 `code/sidecar`。
 
 ### Fixed

@@ -1,7 +1,7 @@
 ---
 id: FACP-002
 title: 消息协议规范
-version: 0.4.1
+version: 0.4.2
 status: stable
 owner: 李富强
 updated: 2026-11-07
@@ -210,7 +210,7 @@ FSID 是**跨 App 协作项目的根标识**。一个 FSID 可以在 N 个 App �
 6. 深度校验      call_depth > max_call_depth                 → 4004
 7. 能力校验      intent 是否支持、能力标签是否匹配            → rejected
 8. TTL 校验      是否已过期                                   → timeout
-9. 执行          Sidecar 注入 / Executor 执行 steps
+9. 执行          Sidecar 注入 / Executor 执行 steps（每步前复查急停，见 FACP-004 §4.3）
 10. 回执         组装 REPLY，同一 trace_id 返回
 ```
 
@@ -233,7 +233,7 @@ FSID 是**跨 App 协作项目的根标识**。一个 FSID 可以在 N 个 App �
 | 深度熔断 | `call_depth > max_call_depth` | 拒绝，终止本次分支 |
 | 环检测 | 同一 `trace_id` 内 `caller_node_id` 重复出现 | 记录告警，第二次出现即拒绝（建议实现） |
 | 节点熔断 | 连续失败 ≥ 5 次或 P95 延迟超阈值 | Registry 标记 `degraded`，能力寻址跳过它 |
-| 会话急停 | `user_suspend=true` | 所有新 CALL 拒绝，已在途的回执正常返回 |
+| 会话急停 | `user_suspend=true` | 所有新 CALL 拒绝（4012）；在途任务在下一步前中止（FACP-004 §4.3） |
 | 全局急停 | 停止 NATS | 全链路协作停止，各 Agent 退化为单机 |
 
 ## 8. 安全要求
