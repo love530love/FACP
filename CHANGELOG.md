@@ -8,6 +8,17 @@
 
 ## [Unreleased]
 
+（待发布）
+
+---
+
+## [0.4.0] - 2026-11-07
+
+> **迁移说明（调用方注意）**：L2 高危动作的放行条件由「仅全局开关」收紧为「全局 + 会话级」。
+> 调用方需在 CALL 的 `payload` 中带 `session_high_risk_granted: true`（由 Sidecar 依据 Observer
+> 的授信结论填写），否则 `file_write` / `shell_run` 一律返回 `forbidden`，且整个任务在预检阶段
+> 被拒绝、不执行任何步骤。这是收紧方向：不会造成越权，只会让未携带该字段的旧调用被拒绝。
+
 ### Added
 - 建立 FACP 文档项目：分层文档（00–08）、索引脚本、维护规范、术语表、路线图。
 - `code/executor` 最小可运行 Demo：NATS 订阅、UIA 动作引擎、高危动作拦截。
